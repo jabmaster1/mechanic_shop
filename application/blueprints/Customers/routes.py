@@ -5,7 +5,7 @@ from sqlalchemy import select
 from application.models import Customer, db
 from . import customers_bp
 from ...extensions import limiter, cache
-from ...utils.util import token_required, encode_token
+from ...utils.util import token_required, encode_token, mechanic_required
 
 # ------------------ Customer Routes ------------------
 # CREATE Customer
@@ -15,7 +15,10 @@ def create_customer():
     try:
         new_customer = customer_schema.load(request.json)
     except ValidationError as e:
-        return jsonify(e.messages), 400
+        return jsonify({
+            'error': 'Invalid input data.',
+            'messages': e.messages
+            }), 400
     
     query = select(Customer).where(Customer.email == new_customer.email)
     existing_customer = db.session.execute(query).scalars().first()
@@ -51,11 +54,12 @@ def login_customer():
         }
         return jsonify(response), 200
     else: 
-        return jsonify({'error': 'Invalid email or password.'}), 400
+        return jsonify({'message': 'Invalid email or password.'}), 400
 
 # GET all customers
 @customers_bp.route('/', methods=['GET'])
 @token_required
+@mechanic_required
 def get_all_customers(id, role):
     try:
         page = int(request.args.get('page', 1))
@@ -72,24 +76,28 @@ def get_all_customers(id, role):
 # GET customer by ID
 @customers_bp.route('/<int:customer_id>', methods=['GET'])
 @token_required
+@mechanic_required
 def get_customer_by_id(id, role, customer_id):
     customer = db.session.get(Customer, customer_id)
     
     if customer:
         return customer_schema.jsonify(customer), 200
     else:
-        return jsonify({'error': 'Customer not found.'}), 400
+        return jsonify({'message': 'Customer not found.'}), 400
     
-# UPDATE customer by ID
-@customers_bp.route('/<int:customer_id>', methods=['PUT'])
+# UPDATE customer
+@customers_bp.route('/', methods=['PUT'])
 @token_required
-def update_customer_by_id(id, role, customer_id):
-    customer = db.session.get(Customer, customer_id)
+
+def update_customer_by_id(id, role):
+    customer = db.session.get(Customer, id)
     
     if not customer:
-        return jsonify({'error': 'Customer not found.'}), 404
+        return jsonify({'message': 'Customer not found.'}), 404
 
-    for key, value in request.json.items():
+    data = request.get_json()
+    
+    for key, value in data.items():
         if hasattr(customer, key):
             setattr(customer, key, value)
         
@@ -97,13 +105,13 @@ def update_customer_by_id(id, role, customer_id):
     return customer_schema.jsonify(customer), 200
 
 # DELETE customer by ID
-@customers_bp.route('/<int:customer_id>', methods=['DELETE'])
+@customers_bp.route('/', methods=['DELETE'])
 @token_required
-def delete_customer_by_id(id, role, customer_id):
-    customer = db.session.get(Customer, customer_id)
+def delete_customer_by_id(id, role):
+    customer = db.session.get(Customer, id)
     
     if not customer:
-        return jsonify({'error': 'Customer not found.'}), 404
+        return jsonify({'message': 'Unauthorized access. Token has expired or customer does not exist.'}), 401
     
     db.session.delete(customer)
     db.session.commit()

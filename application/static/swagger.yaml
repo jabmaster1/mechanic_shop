@@ -1,0 +1,321 @@
+swagger: '2.0'
+info:
+  version: '1.0.0'
+  title: 'Mechanic Shop API'
+  description: 'API for managing a mechanic shop, including customers, mechanics, tickets and inventory.'
+host: '127.0.0.1:5000'
+schemes:
+  - 'http'
+consumes:
+  - 'application/json'
+produces:
+  - 'application/json'
+
+securityDefinitions:
+  bearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+
+paths:
+  /customers/login:
+    post:
+      tags:
+        - 'Customer'
+      summary: 'Customer login (Generates token and assigns Customer role)'
+      description: 'Validates customer credentials and generates a customer specific token.'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Customer login credentials'
+          required: true
+          schema:
+            $ref: '#/definitions/CustomerLogIn'
+      responses:
+        200:
+          description: 'Customer logged in successfully'
+          schema:
+            $ref: '#/definitions/CustomerLogInResponseSuccess'
+        400:
+          description: 'Invalid email or password'
+          schema:
+            $ref: '#/definitions/CustomerLogInResponseFailure'
+  /customers:
+    post:
+      tags:
+        - 'Customer'
+      summary: 'Create a new Customer Account'
+      description: 'Creates a new customer account with the provided details. Email must be unique.'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Customer details for account creation'
+          required: true
+          schema:
+            $ref: '#/definitions/CreateCustomer'
+      responses:
+        201:
+          description: 'Customer account created successfully'
+          schema:
+            $ref: '#/definitions/CreateCustomerResponseSuccess'
+            example:
+              id: 1
+              name: 'John Doe'
+              email: 'john.doe@example.com'
+              phone: '123-456-7890'
+              password: 'password123'
+        400:
+          description: 'Invalid input data, missing field or email already exists.'
+          schema:
+            $ref: '#/definitions/CreateCustomerResponseFailureMissingField'
+    get:
+      tags:
+        - 'Customer'
+      summary: 'Get all customers'
+      description: 'Retrieves a list of all customers in the system. Must have the mechanic role granted with Mechanic Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'A list of customers'
+          schema:
+            $ref: '#/definitions/GetAllCustomersResponseSuccess'
+        401:
+          description: 'Unauthorized access. Token has expired.'
+          schema:
+            $ref: '#/definitions/GetAllCustomersResponseFailure'
+        400:
+          description: 'Invalid input data.'
+    put:
+      tags:
+        - 'Customer'
+      summary: 'Update customers information'
+      description: 'Updates the information of an existing customer. Must have the mechanic role granted with Mechanic Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Customer information to update'
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateCustomer'
+      responses:
+        200:
+          description: 'Customer information updated successfully'
+          schema:
+            $ref: '#/definitions/UpdateCustomerResponseSuccess'
+          example:
+            id: 1
+            name: 'John Doe'
+            email: 'john.doe@example.com'
+            phone: '123-456-7890'
+            password: 'password123'
+        400:
+          description: 'Invalid input data.'
+          schema:
+            $ref: '#/definitions/UpdateCustomerResponseFailure'
+    delete:
+      tags:
+        - 'Customer'
+      summary: 'Delete a customer account'
+      description: 'Deletes a customer account that is actively logged in. Must have a customer role and token from logging in with the Customer Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'Customer account deleted successfully.'
+          schema:
+            $ref: '#/definitions/DeleteCustomerResponseSuccess'
+        401:
+          description: 'Unauthorized access. Token has expired.'
+          schema:
+            $ref: '#/definitions/DeleteCustomerResponseFailureUnauthorized'
+  /customer/{id}:
+    get:
+      tags:
+        - 'Customer'
+      summary: 'Get a customers account by ID'
+      description: 'Retrieves a customers account information by their ID. Must have the mechanic role and token from logging in with the Mechanic Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: 'path'
+          name: 'id'
+          description: 'ID of the customer to retrieve'
+          required: true
+          type: 'integer'
+      responses:
+        200:
+          description: 'Customer account information retrieved successfully.'
+          schema:
+            $ref: '#/definitions/GetCustomerByIDResponseSuccess'
+          example:
+            id: 1
+            name: 'John Doe'
+            email: 'john.doe@email.com'
+            phone: '123-456-7890'
+            password: 'password123'
+        400:
+          description: 'Invalid input data or customer not found.'
+          schema:
+            $ref: '#/definitions/GetCustomerByIDResponseFailure'
+definitions:
+  
+  CustomerLogIn:
+    type: 'object'
+    properties:
+      email:
+        type: 'string'
+      password:
+        type: 'string'
+    required:
+      - email
+      - password
+
+  CustomerLogInResponseSuccess:
+    type: 'object'
+    properties:
+      token:
+        type: 'string'
+      message:
+        type: 'string'
+      status:
+        type: 'string'
+
+  CustomerLogInResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  CreateCustomer:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      password:
+        type: 'string'
+      
+    required:
+      - name
+      - email
+      - phone
+      - password
+
+  CreateCustomerResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      password:
+        type: 'string'
+
+  CreateCustomerResponseFailure:
+    type: 'object'
+    properties:
+      error:
+        type: 'string'
+      messages:
+        type: 'object'
+
+  GetAllCustomersResponseSuccess:
+    type: 'array'
+    items:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        name:
+          type: 'string'
+        email:
+          type: 'string'
+        phone:
+          type: 'string'
+        password:
+          type: 'string'
+
+  GetAllCustomersResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  UpdateCustomer:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      password:
+        type: 'string'
+    required:
+      - name
+      - email
+      - phone
+      - password
+  
+  UpdateCustomerResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      password:
+        type: 'string'
+
+  UpdateCustomerResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  DeleteCustomerResponseSuccess:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+  
+  DeleteCustomerResponseFailureUnauthorized:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  GetCustomerByIDResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      password:
+        type: 'string'
+    
+  GetCustomerByIDResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
