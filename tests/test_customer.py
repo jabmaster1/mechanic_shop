@@ -91,6 +91,49 @@ class TestCustomer(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
         self.assertIsInstance(data, dict)
+    
+    def test_create_customer_missing_fields(self):
+        customer_payload = {
+            "name": "Jane Doe" 
+        }
+        response = self.client.post('/customers/', json=customer_payload)
+        self.assertEqual(response.status_code, 400) 
+
+    def test_login_customer_wrong_password(self):
+        credentials = {
+            "email": 'test@email.com',
+            "password": 'wrongpassword'
+        }
+        response = self.client.post('/customers/login', json=credentials)
+        self.assertEqual(response.status_code, 400)
+
+    def test_update_customer_no_auth(self):
+        update_payload = {
+            "name": "John Doe",
+            "email": "jd@email.com",
+            "phone": "789-456-1238",
+            "password": "password123"
+        }
+        response = self.client.put('/customers/', json=update_payload)
+        self.assertEqual(response.status_code, 401)
         
+    def test_delete_customer_no_auth(self):
+        response = self.client.delete('/customers/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_my_tickets_invalid_token(self):
+        headers = {'Authorization': 'Bearer invalidtoken'}
+        response = self.client.get('/tickets/my-tickets', headers=headers)
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_inventory_by_invalid_ID(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.get('/inventory/999', headers=headers)
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_all_inventory_no_auth(self):
+        response = self.client.get('/inventory/')
+        self.assertEqual(response.status_code, 401)
+    
 if __name__ == "__main__":
     unittest.main()

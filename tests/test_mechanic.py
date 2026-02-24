@@ -198,6 +198,70 @@ class TestMechanic(unittest.TestCase):
         data = response.get_json()
         self.assertEqual(data['message'], 'inventory deleted successfully.')
     
+    def test_create_mechanic_missing_fields(self):
+        payload = {"name": "John Doe"}
+        response = self.client.post('/mechanics/', json=payload)
+        self.assertEqual(response.status_code, 400)
+
+    def test_login_mechanic_wrong_password(self):
+        credentials = {"email": 'test@email.com', "password": 'wrong'}
+        response = self.client.post('/mechanics/login', json=credentials)
+        self.assertEqual(response.status_code, 400)
+
+    def test_update_mechanic_no_auth(self):
+        payload = {"name": "John", "email": "jd@email.com", "phone": "123", "salary": 60000.00, "password": "pass"}
+        response = self.client.put('/mechanics/1', json=payload)
+        self.assertEqual(response.status_code, 401)
+
+    def test_delete_mechanic_no_auth(self):
+        response = self.client.delete('/mechanics/1')
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_all_mechanics_no_auth(self):
+        response = self.client.get('/mechanics/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_all_customers_no_auth(self):
+        response = self.client.get('/customers/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_customer_by_invalid_ID(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.get('/customers/999', headers=headers)
+        self.assertEqual(response.status_code, 400)
+
+    def test_assign_mechanic_to_ticket_invalid_ids(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.put('/tickets/999/assign-mechanic/999', headers=headers)
+        self.assertEqual(response.status_code, 404)
+
+    def test_remove_mechanic_from_ticket_invalid_ids(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.put('/tickets/999/remove-mechanic/999', headers=headers)
+        self.assertEqual(response.status_code, 404)
+
+    def test_assign_inventory_to_ticket_invalid_ids(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.post('/tickets/999/add-part/999', headers=headers)
+        self.assertEqual(response.status_code, 404)
+
+    def test_create_inventory_missing_fields(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        payload = {"name": "Rotor"}
+        response = self.client.post('/inventory/create', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 400)
+
+    def test_update_inventory_invalid_ID(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        payload = {"name": "Rotor", "price": 50.25}
+        response = self.client.put('/inventory/999', json=payload, headers=headers)
+        self.assertEqual(response.status_code, 400)
+
+    def test_delete_inventory_invalid_ID(self):
+        headers = {'Authorization': "Bearer " + self.token}
+        response = self.client.delete('/inventory/999', headers=headers)
+        self.assertEqual(response.status_code, 404)
+    
     
 if __name__ == "__main__":
     unittest.main()
