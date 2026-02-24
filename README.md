@@ -12,6 +12,8 @@ A simple Flask-based application to manage customers, service tickets, and mecha
 - Assign/remove mechanics to/from service tickets
 - Retrieve all service tickets
 - Added Inventory management and ability to assign inventory to tickets
+- Added API Documentation
+- Test Driven Developement for future API users
 
 ---
 
