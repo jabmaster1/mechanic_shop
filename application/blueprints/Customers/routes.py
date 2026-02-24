@@ -115,4 +115,4 @@ def delete_customer_by_id(id, role):
     
     db.session.delete(customer)
     db.session.commit()
-    return jsonify({'message': 'Customer deleted succesfully.'}), 200
+    return jsonify({'message': 'Customer deleted successfully.'}), 200

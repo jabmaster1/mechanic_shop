@@ -131,7 +131,7 @@ paths:
           description: 'Unauthorized access. Token has expired.'
           schema:
             $ref: '#/definitions/DeleteCustomerResponseFailureUnauthorized'
-  /customer/{id}:
+  /customers/{id}:
     get:
       tags:
         - 'Customer'
@@ -160,6 +160,370 @@ paths:
           description: 'Invalid input data or customer not found.'
           schema:
             $ref: '#/definitions/GetCustomerByIDResponseFailure'
+  /mechanics/login:
+    post:
+      tags:
+        - 'Mechanic'
+      summary: 'Mechanic login (Generates token and assigns Mechanic role)'
+      description: 'Validates mechanic credentials and generates a mechanic specific token.'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Mechanic login credentials'
+          required: true
+          schema:
+            $ref: '#/definitions/MechanicLogIn'
+      responses:
+        200:
+          description: 'Mechanic logged in successfully'
+          schema:
+            $ref: '#/definitions/CustomerLogInResponseSuccess'
+        400:
+          description: 'Invalid email or password'
+          schema:
+            $ref: '#/definitions/CustomerLogInResponseFailure'
+  /mechanics:
+    post:
+      tags:
+        - 'Mechanic'
+      summary: 'Create a new Mechanic Account'
+      description: 'Creates a new mechanic account with the provided details.'
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Mechanic details for account creation'
+          required: true
+          schema:
+            $ref: '#/definitions/CreateMechanic'
+      responses:
+        201:
+          description: 'Mechanic account created successfully'
+          schema:
+            $ref: '#/definitions/CreateMechanicResponseSuccess'
+        400:
+          description: 'Mechanic with this email already exists or invalid input data.'
+          schema:
+            $ref: '#/definitions/CreateMechanicResponseFailure'
+    get:
+      tags:
+        - 'Mechanic'
+      summary: 'Get all mechanics'
+      description: 'Retrieves a list of all mechanics in the system.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'A list of all mechanics'
+          schema:
+            $ref: '#/definitions/GetAllMechanicsRespsonseSuccess'
+        401:
+          description: 'Unauthorized access. Token has expired.'
+          schema:
+            $ref: '#/definitions/GetAllMechanicsResponseFailure'
+  /mechanics/{id}:
+    get:
+      tags:
+        - 'Mechanic'
+      summary: 'Get a mechanics account by ID'
+      description: 'Retrieves a mechanics account information by their ID. Must have the mechanic role and token from logging in with the Mechanic Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: 'path'
+          name: 'id'
+          description: 'ID of the mechanic to retrieve'
+          required: true
+          type: 'integer'
+      responses:
+        200:
+          description: 'Mechanic account information retrieved successfully.'
+          schema:
+            $ref: '#/definitions/GetMechanicByIDResponseSuccess'
+        400:
+          description: 'Invalid input data or mechanic not found.'
+          schema:
+            $ref: '#/definitions/GetMechanicByIDResponseFailure'
+        401:
+          description: 'Unauthorized access. Token has expired.'
+          schema:
+            $ref: '#/definitions/GetMechanicByIDResponseFailure'
+
+  /mechanics/top:
+    get:
+      tags:
+        - 'Mechanic'
+      summary: 'Get a list of mechanics in descending order by how many tickets they have.'
+      description: 'Retrieves a list of mechanics sorted by the number of tickets they have in descending order. Must have the mechanic role and token from logging in with the Mechanic Login endpoint to access this endpoint.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'A list of mechanics sorted by the number of tickets they have in descending order.'
+          schema:
+            $ref: '#/definitions/GetTopMechanicsResponseSuccess'
+        401:
+          description: 'Unauthorized access. Token has expired.'
+          schema:
+            $ref: '#/definitions/GetAllMechanicsResponseFailure'
+  /tickets:
+    post:
+      tags:
+        - 'Ticket'
+      summary: 'Create a new ticket'
+      description: 'Creates a new service ticket. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: 'body'
+          name: 'body'
+          description: 'Ticket details'
+          required: true
+          schema:
+            $ref: '#/definitions/CreateTicket'
+      responses:
+        201:
+          description: 'Ticket created successfully'
+          schema:
+            $ref: '#/definitions/CreateTicketResponseSuccess'
+        400:
+          description: 'Invalid input data'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+    get:
+      tags:
+        - 'Ticket'
+      summary: 'Get all tickets'
+      description: 'Retrieves all tickets. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'List of all tickets'
+          schema:
+            $ref: '#/definitions/GetAllTicketsResponseSuccess'
+        401:
+          description: 'Unauthorized access'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+
+  /tickets/{ticket_id}/assign-mechanic/{mechanic_id}:
+    put:
+      tags:
+        - 'Ticket'
+      summary: 'Assign mechanic to ticket'
+      description: 'Assigns a mechanic to a ticket. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          type: integer
+        - in: path
+          name: mechanic_id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'Mechanic assigned successfully or already assigned'
+          schema:
+            $ref: '#/definitions/TicketMessageResponse'
+        404:
+          description: 'Ticket or mechanic not found'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+
+  /tickets/{ticket_id}/remove-mechanic/{mechanic_id}:
+    put:
+      tags:
+        - 'Ticket'
+      summary: 'Remove mechanic from ticket'
+      description: 'Removes a mechanic from a ticket. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          type: integer
+        - in: path
+          name: mechanic_id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'Mechanic removed successfully or not assigned to ticket'
+          schema:
+            $ref: '#/definitions/TicketMessageResponse'
+        401:
+          description: 'Unauthorized Access'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+        404:
+          description: 'Ticket or mechanic not found'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+  /tickets/my-tickets:
+    get:
+      tags:
+        - 'Ticket'
+      summary: 'Get logged-in customer tickets'
+      description: 'Returns tickets belonging to logged-in customer. Must have customer token.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'List of customer tickets'
+          schema:
+            $ref: '#/definitions/GetAllTicketsResponseSuccess'
+        401:
+          description: 'Unauthorized access'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+
+  /tickets/{ticket_id}/add-part/{inventory_id}:
+    post:
+      tags:
+        - 'Ticket'
+      summary: 'Assign inventory item to ticket'
+      description: 'Assigns an inventory item to a ticket. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: ticket_id
+          required: true
+          type: integer
+        - in: path
+          name: inventory_id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'Inventory item assigned successfully'
+          schema:
+            $ref: '#/definitions/TicketMessageResponse'
+        404:
+          description: 'Ticket or inventory item not found'
+          schema:
+            $ref: '#/definitions/TicketResponseFailure'
+  
+  /inventory/create:
+    post:
+      tags:
+        - 'Inventory'
+      summary: 'Create a new inventory item'
+      description: 'Creates a new inventory item. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          description: 'Inventory item details'
+          required: true
+          schema:
+            $ref: '#/definitions/CreateInventory'
+      responses:
+        201:
+          description: 'Inventory item created successfully'
+          schema:
+            $ref: '#/definitions/CreateInventoryResponseSuccess'
+        400:
+          description: 'Inventory with this name already exists or invalid input data'
+          schema:
+            $ref: '#/definitions/InventoryResponseFailure'
+
+  /inventory:
+    get:
+      tags:
+        - 'Inventory'
+      summary: 'Get all inventory items'
+      description: 'Retrieves all inventory items. Must have valid token.'
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: 'List of all inventory items'
+          schema:
+            $ref: '#/definitions/GetAllInventoryResponseSuccess'
+        401:
+          description: 'Unauthorized access'
+          schema:
+            $ref: '#/definitions/InventoryResponseFailure'
+
+  /inventory/{inventory_id}:
+    get:
+      tags:
+        - 'Inventory'
+      summary: 'Get inventory item by ID'
+      description: 'Retrieves an inventory item by its ID. Must have valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: inventory_id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'Inventory item retrieved successfully'
+          schema:
+            $ref: '#/definitions/CreateInventoryResponseSuccess'
+        400:
+          description: 'Inventory not found'
+          schema:
+            $ref: '#/definitions/InventoryResponseFailure'
+
+    put:
+      tags:
+        - 'Inventory'
+      summary: 'Update inventory item by ID'
+      description: 'Updates an inventory item. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: inventory_id
+          required: true
+          type: integer
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateInventory'
+      responses:
+        200:
+          description: 'Inventory updated successfully'
+          schema:
+            $ref: '#/definitions/CreateInventoryResponseSuccess'
+        400:
+          description: 'Inventory not found or invalid input'
+          schema:
+            $ref: '#/definitions/InventoryResponseFailure'
+
+    delete:
+      tags:
+        - 'Inventory'
+      summary: 'Delete inventory item by ID'
+      description: 'Deletes an inventory item. Must have mechanic role and valid token.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: inventory_id
+          required: true
+          type: integer
+      responses:
+        200:
+          description: 'Inventory deleted successfully'
+          schema:
+            $ref: '#/definitions/InventoryMessageResponse'
+        404:
+          description: 'Inventory not found'
+          schema:
+            $ref: '#/definitions/InventoryResponseFailure'
+
+
 definitions:
   
   CustomerLogIn:
@@ -317,5 +681,289 @@ definitions:
   GetCustomerByIDResponseFailure:
     type: 'object'
     properties:
+      message:
+        type: 'string'
+
+  MechanicLogIn:
+    type: 'object'
+    properties:
+      email:
+        type: 'string'
+      password:
+        type: 'string'
+    required:
+      - email 
+      - password
+
+  MechanicLogInResponseSuccess:
+    type: 'object'
+    properties:
+      tokem:
+        type: 'string'
+      message:
+        type: 'string'
+      status:
+        type: 'string'
+
+  MechanicLogInResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  CreateMechanic:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      salary:
+        type: 'float'
+      password:
+        type: 'string'
+    required:
+      - name
+      - email
+      - phone
+      - salary
+      - password
+
+  CreateMechanicResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      salary:
+        type: number
+        format: float
+        example: 50000.00
+      password:
+        type: 'string'
+
+  CreateMechanicResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  GetAllMechanicsResponseSuccess:
+    type: 'array'
+    items:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        name:
+          type: 'string'
+        email:
+          type: 'string'
+        phone:
+          type: 'string'
+        salary:
+          type: number
+          format: float
+          example: 50000.00
+        password:
+          type: 'string'
+    
+  GetAllMechanicsResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  GetMechanicByIDResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      salary:
+        type: number
+        format: float
+        example: 50000.00
+      password:
+        type: 'string'
+
+  GetMechanicByIDResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  GetTopMechanicsResponseSuccess:
+    type: 'array'
+    items:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        email:
+          type: 'string'
+        name:
+          type: 'string'
+        phone:
+          type: 'string'
+        ticket_count:
+          type: 'integer'
+  
+  CreateTicket:
+    type: object
+    properties:
+      VIN:
+        type: 'string'
+      service_date:
+        type: "string"
+        format: 'date'
+        example: "2026-02-23"
+      service_desc:
+        type: 'string'
+      customer_id:
+        type: 'integer'
+      mechanic_id:
+        type: 'integer'
+    required:
+      - VIN
+      - service_date
+      - service_desc
+      - customer_id
+      - mechanic_id
+
+  CreateTicketResponseSuccess:
+    type: object
+    properties:
+      id:
+        type: 'integer'
+      VIN:
+        type: 'string'
+      service_date:
+        type: "string"
+        format: 'date'
+        example: "2026-02-23"
+      service_desc:
+        type: 'string'
+      customer_id:
+        type: 'integer'
+      mechanic_id:
+        type: 'integer'
+
+  GetAllTicketsResponseSuccess:
+    type: 'array'
+    items:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        VIN:
+          type: 'string'
+        service_date:
+          type: "string"
+          format: 'date'
+          example: "2026-02-23"
+        service_desc:
+          type: 'string'
+        customer_id:
+          type: 'integer'
+        mechanic_id:
+          type: 'integer'
+  
+  UpdateTicketMechanics:
+    type: 'object'
+    properties:
+      add_ids:
+        type: 'array'
+        items:
+          type: 'integer'
+      remove_ids:
+        type: 'array'
+        items:
+          type: 'integer'
+
+  TicketMessageResponse:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  TicketResponseFailure:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+  
+  CreateInventory:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      price:
+        type: 'number'
+        format: 'float'
+        example: 49.99
+    required:
+      - name
+      - price
+
+  UpdateInventory:
+    type: 'object'
+    properties:
+      name:
+        type: 'string'
+      price:
+        type: 'number'
+        format: 'float'
+        example: 49.99
+
+  CreateInventoryResponseSuccess:
+    type: 'object'
+    properties:
+      id:
+        type: 'integer'
+      name:
+        type: 'string'
+      price:
+        type: 'number'
+        format: 'float'
+        example: 49.99
+
+  GetAllInventoryResponseSuccess:
+    type: 'array'
+    items:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        name:
+          type: 'string'
+        price:
+          type: 'number'
+          format: 'float'
+          example: 49.99
+
+  InventoryMessageResponse:
+    type: 'object'
+    properties:
+      message:
+        type: 'string'
+
+  InventoryResponseFailure:
+    type: 'object'
+    properties:
+      error:
+        type: 'string'
       message:
         type: 'string'

@@ -21,7 +21,7 @@ def create_mechanic():
     existing_mechanic = db.session.execute(query).scalars().first()
     
     if existing_mechanic:
-        return jsonify({'error': 'Mechanic with this email already exists.'}), 400
+        return jsonify({'message': 'Mechanic with this email already exists.'}), 400
     
     db.session.add(new_mechanic)
     db.session.commit()
