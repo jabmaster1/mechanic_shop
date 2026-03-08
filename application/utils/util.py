@@ -4,7 +4,7 @@ from functools import wraps
 from flask import request, jsonify
 import os
 
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'Secret Key'
+SECRET_KEY = os.environ.get('SECRET_KEY') or 'secret key'
 
 def encode_token(id, role):
     payload = {
